@@ -93,20 +93,9 @@ async def _get_response(command: bytes, logger: Logger) -> JSONResponse:
 async def hyprctl_json(command: str, logger: Logger | None = None) -> JSONResponse:
     """Run an IPC command and return the JSON output."""
     logger = cast(Logger, logger or log)
-    now = time.time()
-    cache_data: CacheData | None = cached_responses.get(command)
-    if cache_data and cache_data.expiration_date > now:
-        logger.debug("%s (CACHE HIT)", command)
-        return await cache_data.wait_update()
-
     logger.debug(command)
-    if cache_data:  # should fill the cache
-        cache_data.set_pending(ref_time=now)
-
     ret = await _get_response(f"-j/{command}".encode(), logger)
     assert isinstance(ret, list | dict)
-    if cache_data:
-        cache_data.set_value(ret)
     return ret
 
 
